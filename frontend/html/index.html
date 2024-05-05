@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Subway Stations</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    </style>
+</head>
+<body>  
+    <header>
+        <h1>Welcome to the Subway Stations App oo</h1>
+    </header>
+
+    <main>  
+        <h2>List of Subway Stations</h2>
+        <ul>
+            <li>Station 1</li>
+            <li>Station 2</li>
+            <li>Station 3</li>
+            <!-- Add more stations as needed -->
+        </ul>
+        <h2>Map of the stations</h2>
+
+        <div id="map">
+            <p>Plotons</p>
+            
+            <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+            <script>
+                var map = L.map('map').setView([47.497913, 19.040236], 13);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+                    maxZoom: 18,
+                }).addTo(map);
+
+                var marker = L.marker([47.497913, 19.040236]).addTo(map);
+                marker.bindPopup("Toto");
+                console.log("Hello");
+            </script>
+            <script>
+                function plotAllStops() {
+                    // Make an AJAX request to retrieve data from the server
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', '/plot-all-stops', true);
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            var data = JSON.parse(xhr.responseText);
+                            data.forEach(function(stop) {
+
+                                var markerIcon = L.icon({
+                                    iconUrl: `icons/${stop.type}.png`, // Replace with the path to your image
+                                    iconSize:     [15, 15], // size of the icon
+                                    iconAnchor:   [22, 94], // point of the icon which will correspond to marker's location
+                                    popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+                                });
+
+                                var marker = L.marker([stop.lat, stop.lon], { icon: markerIcon }).addTo(map);
+
+                                marker.on('click', function(e) {
+                                    console.log("Clicked on " + stop.name);
+                                    const apiUrl = `/next-departures/${stop.id}`
+                                    console.log(apiUrl); 
+                                    xhr.open('GET', apiUrl, true);
+                                    xhr.onreadystatechange = function() {
+                                        if (xhr.readyState === 4 && xhr.status === 200) {
+                                            var departure = JSON.parse(xhr.responseText);
+                                            console.log(departure);    
+                                            var popupContent = `<h2>Direction ${stop.name}</h2>`;
+                                            popupContent += `<p>direction ${departure.stopHeadsign} at ${departure.departureTime}</p>`;
+                                            marker.bindPopup(popupContent).openPopup()  ;
+                                            console.log(popupContent);
+                                        }
+                                    };
+                                    xhr.send();
+                                });
+
+                            });
+                        }
+                    };
+                    xhr.send();
+                }
+                plotAllStops();
+            </script>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2024 Subway Stations App. All rights reserved.</p>
+    </footer>
+</body>
+</html>
